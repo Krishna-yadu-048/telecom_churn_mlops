@@ -59,7 +59,7 @@ def predict(data: CustomerFeatures):
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded. Check server logs.")
 
-    df = pd.DataFrame([data.dict()])
+    df = pd.DataFrame([data.dict()]).astype(float)
 
     # Add engineered features (must match feature_engineering.py)
     df["ChargePerMin"] = df["MonthlyCharge"] / (df["DayMins"] + 1e-6)

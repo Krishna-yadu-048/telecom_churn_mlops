@@ -12,12 +12,13 @@ import pickle
 import mlflow
 import mlflow.xgboost
 import dagshub
+import dagshub.auth
 from xgboost import XGBClassifier
 from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score
 from mlflow.models.signature import infer_signature
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ def build_model(train_params: dict) -> XGBClassifier:
         max_depth=train_params["max_depth"],
         learning_rate=train_params["learning_rate"],
         random_state=train_params["random_state"],
-        use_label_encoder=False,
         eval_metric="logloss",
     )
 
@@ -51,19 +51,29 @@ if __name__ == "__main__":
     train_params = params["train"]
     mlflow_params = params["mlflow"]
 
+    # Authenticate with DagsHub token explicitly (required in Docker / CI)
+    dagshub.auth.add_app_token(os.getenv("DAGSHUB_TOKEN"))
+
     # Connect MLflow to DagsHub
     dagshub.init(
         repo_owner=os.getenv("DAGSHUB_USERNAME"),
         repo_name="telecom_churn_mlops",
         mlflow=True,
     )
+
+    # Re-set credentials explicitly after dagshub.init()
+    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
+    os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("DAGSHUB_USERNAME")
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv("DAGSHUB_TOKEN")
+
     mlflow.set_experiment(mlflow_params["experiment_name"])
+
+    # Disable autolog entirely — we log everything manually
+    mlflow.xgboost.autolog(disable=True)
 
     X_train, y_train = load_data(target_col)
 
     with mlflow.start_run(run_name="xgboost_churn"):
-        # Enable autologging
-        mlflow.xgboost.autolog()
 
         model = build_model(train_params)
         model.fit(X_train, y_train)
@@ -82,9 +92,10 @@ if __name__ == "__main__":
         mlflow.set_tag("model_type", "xgboost")
         mlflow.set_tag("dataset", "telecom_churn")
 
-        # Log model with signature
-        sig = infer_signature(X_train, model.predict(X_train))
-        mlflow.xgboost.log_model(model, "model", signature=sig)
+        # Log model explicitly with signature
+        sig = infer_signature(X_train, model.predict_proba(X_train))
+        mlflow.xgboost.log_model(model, artifact_path="model", signature=sig)
+        logger.info("Model logged to MLflow.")
 
         run_id = mlflow.active_run().info.run_id
         logger.info(f"Run ID: {run_id}")
@@ -92,7 +103,7 @@ if __name__ == "__main__":
         for k, v in train_metrics.items():
             logger.info(f"  {k}: {v:.4f}")
 
-    # Save model artifact for DVC tracking
+    # Save model artifact locally for DVC tracking
     os.makedirs("models", exist_ok=True)
     with open("models/TelecomChurnModel.pkl", "wb") as f:
         pickle.dump(model, f)

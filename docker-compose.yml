@@ -4,6 +4,12 @@ services:
       context: .
       dockerfile: docker/Dockerfile.train
     env_file: .env
+    environment:
+      - DAGSHUB_USERNAME=${DAGSHUB_USERNAME}
+      - DAGSHUB_TOKEN=${DAGSHUB_TOKEN}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME}
+      - MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}
     volumes:
       - ./models:/app/models
       - ./data:/app/data
@@ -16,5 +22,11 @@ services:
     ports:
       - "8000:8000"
     env_file: .env
+    environment:
+      - DAGSHUB_USERNAME=${DAGSHUB_USERNAME}
+      - DAGSHUB_TOKEN=${DAGSHUB_TOKEN}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME}
+      - MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}
     volumes:
       - ./models:/app/models

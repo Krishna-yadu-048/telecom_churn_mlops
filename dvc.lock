@@ -1,0 +1,125 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python src/preprocessing.py
+    deps:
+    - path: data/raw/telecom_churn.csv
+      hash: md5
+      md5: a393dbb47c15a7fd088366ae627926b4
+      size: 128828
+    - path: src/preprocessing.py
+      hash: md5
+      md5: 53554067e259e6a3704002cffec52461
+      size: 2508
+    params:
+      params.yaml:
+        data:
+          raw_path: data/raw/telecom_churn.csv
+          test_size: 0.2
+          random_state: 42
+          target_column: Churn
+        preprocessing:
+          drop_columns: []
+          scale: standard
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 32e164b754f6bdfda813811c129bc20f
+      size: 27029
+    - path: data/processed/train.csv
+      hash: md5
+      md5: b2bca521d4bb2bd60471ccd7d5303c72
+      size: 107656
+  feature_engineering:
+    cmd: python src/feature_engineering.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 32e164b754f6bdfda813811c129bc20f
+      size: 27029
+    - path: data/processed/train.csv
+      hash: md5
+      md5: b2bca521d4bb2bd60471ccd7d5303c72
+      size: 107656
+    - path: src/feature_engineering.py
+      hash: md5
+      md5: 9651aa0487fadd8296d4dd978ea6b3b4
+      size: 2746
+    params:
+      params.yaml:
+        preprocessing:
+          drop_columns: []
+          scale: standard
+    outs:
+    - path: data/features/test_features.csv
+      hash: md5
+      md5: 163923bd5f5595a8810b90fba6eb02c1
+      size: 200920
+    - path: data/features/train_features.csv
+      hash: md5
+      md5: a1c7f3391465d9fb12a3e6c95af1da03
+      size: 802656
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/features/train_features.csv
+      hash: md5
+      md5: a1c7f3391465d9fb12a3e6c95af1da03
+      size: 802656
+    - path: src/train.py
+      hash: md5
+      md5: 0344890f6462110b9a9990f5c6cba461
+      size: 3279
+    params:
+      params.yaml:
+        mlflow:
+          experiment_name: telecom_churn
+          registered_model_name: TelecomChurnModel
+        train:
+          model: xgboost
+          n_estimators: 200
+          max_depth: 5
+          learning_rate: 0.05
+          random_state: 42
+    outs:
+    - path: metrics/train_metrics.json
+      hash: md5
+      md5: 63ac894df4a2472473d23ac1eacc263d
+      size: 153
+    - path: models/TelecomChurnModel.pkl
+      hash: md5
+      md5: dca24131f7696ee95d02c85a34996473
+      size: 360432
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/features/test_features.csv
+      hash: md5
+      md5: 163923bd5f5595a8810b90fba6eb02c1
+      size: 200920
+    - path: models/TelecomChurnModel.pkl
+      hash: md5
+      md5: dca24131f7696ee95d02c85a34996473
+      size: 360432
+    - path: src/evaluate.py
+      hash: md5
+      md5: 1c608634a46d397661b0d09bf4ec42de
+      size: 2490
+    params:
+      params.yaml:
+        evaluate:
+          threshold: 0.5
+          primary_metric: roc_auc
+    outs:
+    - path: metrics/confusion_matrix.csv
+      hash: md5
+      md5: 063e79b49e15a40869241426084762b8
+      size: 46
+    - path: metrics/roc_curve.csv
+      hash: md5
+      md5: 33146a6152799c324c5a991f142ebc42
+      size: 3241
+    - path: metrics/test_metrics.json
+      hash: md5
+      md5: 6fdc563e9eaa169e2c95f130a997cd6c
+      size: 150
