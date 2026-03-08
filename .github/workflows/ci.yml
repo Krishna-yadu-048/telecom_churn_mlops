@@ -10,11 +10,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        run: pip install uv
+
       - name: Install dependencies
-        run: pip install uv && uv sync
+        run: uv sync
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: uv run pytest tests/ -v
 
   train:
     needs: test
@@ -30,17 +33,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        run: pip install uv
+
       - name: Install dependencies
-        run: pip install uv && uv sync
+        run: uv sync
 
       - name: Pull latest data
-        run: dvc pull
+        run: uv run dvc pull
 
-      - name: Run DVC pipeline
-        run: dvc repro
-
-      - name: Push artifacts
-        run: dvc push
-
-      - name: Log training run to MLflow
-        run: python src/train.py
+      - name:
