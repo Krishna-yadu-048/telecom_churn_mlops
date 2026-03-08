@@ -29,7 +29,6 @@ jobs:
       MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
       MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
       MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
-
     steps:
       - uses: actions/checkout@v4
 
@@ -42,4 +41,11 @@ jobs:
       - name: Pull latest data
         run: uv run dvc pull
 
-      - name:
+      - name: Run DVC pipeline
+        run: uv run dvc repro
+
+      - name: Push artifacts
+        run: uv run dvc push
+
+      - name: Log training run to MLflow
+        run: uv run python src/train.py
