@@ -69,7 +69,7 @@ def test_split_data_sizes(sample_df):
 
 def test_split_data_target_not_in_features(sample_df):
     X_train, X_test, y_train, y_test = split_data(
-        sample_df, target_col="Churn", test_size=0.2, random_state=42
+        sample_df, target_col="Churn", test_size=0.4, random_state=42
     )
     assert "Churn" not in X_train.columns
     assert "Churn" not in X_test.columns
