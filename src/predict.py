@@ -1,6 +1,6 @@
 """
 Batch prediction utility.
-Loads Production model from MLflow registry → scores a CSV → outputs predictions.
+Loads Production model from MLflow registry → engineers features → scores a CSV → outputs predictions.
 Usage: python src/predict.py --input data/raw/new_customers.csv --output predictions.csv
 """
 import argparse
@@ -10,7 +10,7 @@ import logging
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -21,15 +21,30 @@ def load_production_model(model_name: str):
     return mlflow.pyfunc.load_model(model_uri)
 
 
+def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add engineered features — must match feature_engineering.py and api/app.py."""
+    df = df.copy().astype(float)
+    df["ChargePerMin"] = df["MonthlyCharge"] / (df["DayMins"] + 1e-6)
+    df["OverageRatio"] = df["OverageFee"] / (df["MonthlyCharge"] + 1e-6)
+    df["RoamToDay"] = df["RoamMins"] / (df["DayMins"] + 1e-6)
+    df["CallsPerDay"] = df["DayCalls"] / (df["AccountWeeks"] / 4 + 1e-6)
+    df["HighServiceCalls"] = (df["CustServCalls"] >= 3).astype(float)
+    return df
+
+
 def predict(model, input_path: str, output_path: str, threshold: float = 0.5) -> None:
     df = pd.read_csv(input_path)
     logger.info(f"Scoring {len(df)} records...")
-    scores = model.predict(df)
+
+    df_features = engineer_features(df)
+    scores = model.predict(df_features)
+
     result_df = df.copy()
     result_df["churn_score"] = scores
     result_df["churn_prediction"] = (scores >= threshold).astype(int)
     result_df.to_csv(output_path, index=False)
     logger.info(f"Predictions saved to {output_path}")
+    logger.info(f"Predicted churn: {result_df['churn_prediction'].sum()} / {len(result_df)}")
 
 
 if __name__ == "__main__":
