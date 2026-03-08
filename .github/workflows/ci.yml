@@ -1,0 +1,46 @@
+name: ML Pipeline CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: pip install uv && uv sync
+
+      - name: Run tests
+        run: pytest tests/ -v
+
+  train:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+      MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: pip install uv && uv sync
+
+      - name: Pull latest data
+        run: dvc pull
+
+      - name: Run DVC pipeline
+        run: dvc repro
+
+      - name: Push artifacts
+        run: dvc push
+
+      - name: Log training run to MLflow
+        run: python src/train.py

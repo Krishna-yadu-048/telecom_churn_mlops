@@ -1,0 +1,52 @@
+stages:
+  preprocess:
+    cmd: python src/preprocessing.py
+    deps:
+      - src/preprocessing.py
+      - data/raw/telecom_churn.csv
+    params:
+      - data
+      - preprocessing
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+
+  feature_engineering:
+    cmd: python src/feature_engineering.py
+    deps:
+      - src/feature_engineering.py
+      - data/processed/train.csv
+      - data/processed/test.csv
+    params:
+      - preprocessing
+    outs:
+      - data/features/train_features.csv
+      - data/features/test_features.csv
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/features/train_features.csv
+    params:
+      - train
+      - mlflow
+    outs:
+      - models/TelecomChurnModel.pkl
+    metrics:
+      - metrics/train_metrics.json
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - models/TelecomChurnModel.pkl
+      - data/features/test_features.csv
+    params:
+      - evaluate
+    metrics:
+      - metrics/test_metrics.json:
+          cache: false
+    plots:
+      - metrics/roc_curve.csv
+      - metrics/confusion_matrix.csv

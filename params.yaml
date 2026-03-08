@@ -1,0 +1,24 @@
+data:
+  raw_path: data/raw/telecom_churn.csv
+  test_size: 0.2
+  random_state: 42
+  target_column: Churn
+
+preprocessing:
+  drop_columns: []
+  scale: standard  # standard | minmax | none
+
+train:
+  model: xgboost  # xgboost | sklearn | pytorch
+  n_estimators: 200
+  max_depth: 5
+  learning_rate: 0.05
+  random_state: 42
+
+evaluate:
+  threshold: 0.5
+  primary_metric: roc_auc
+
+mlflow:
+  experiment_name: telecom_churn
+  registered_model_name: TelecomChurnModel

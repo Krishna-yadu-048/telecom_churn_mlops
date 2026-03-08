@@ -1,0 +1,32 @@
+[project]
+name = "telecom-churn-mlops"
+version = "0.1.0"
+description = "Telecom customer churn prediction MLOps project"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas",
+    "scikit-learn",
+    "xgboost",
+    "imbalanced-learn",
+    "mlflow",
+    "dvc",
+    "dagshub",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src", "api"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

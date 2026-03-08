@@ -1,0 +1,20 @@
+services:
+  train:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.train
+    env_file: .env
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./metrics:/app/metrics
+
+  serve:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.serve
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./models:/app/models
