@@ -68,8 +68,8 @@ stages:
       size: 802656
     - path: src/train.py
       hash: md5
-      md5: 0344890f6462110b9a9990f5c6cba461
-      size: 3279
+      md5: 5b1152d0934f2b01d056404e0e2bc591
+      size: 3809
     params:
       params.yaml:
         mlflow:
@@ -88,8 +88,8 @@ stages:
       size: 153
     - path: models/TelecomChurnModel.pkl
       hash: md5
-      md5: dca24131f7696ee95d02c85a34996473
-      size: 360432
+      md5: fb9b404a98237f3acc02812429c0e2d3
+      size: 360347
   evaluate:
     cmd: python src/evaluate.py
     deps:
@@ -99,8 +99,8 @@ stages:
       size: 200920
     - path: models/TelecomChurnModel.pkl
       hash: md5
-      md5: dca24131f7696ee95d02c85a34996473
-      size: 360432
+      md5: fb9b404a98237f3acc02812429c0e2d3
+      size: 360347
     - path: src/evaluate.py
       hash: md5
       md5: 1c608634a46d397661b0d09bf4ec42de
